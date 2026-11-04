@@ -1,27 +1,3 @@
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname,
-    );
-  }, [location.pathname]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
-      </div>
-    </div>
-  );
-};
-
-export default NotFound;
+const NotFound=()=>{const location=useLocation();useEffect(()=>{document.title="Page not found | Pontypool"},[location.pathname]);return <main className="narrow-page grid min-h-[60vh] place-items-center text-center"><div><div className="flicker-bulb mx-auto mb-7">✦</div><p className="eyebrow">We’ve lost the light</p><h1 className="mt-3 font-serif text-6xl">404</h1><p className="mt-4 text-sm text-[var(--muted)]">This page has wandered off. Let’s find something lovely instead.</p><div className="mt-7 flex justify-center gap-3"><Link className="button-dark" to="/">Back home</Link><Link className="button-light" to="/shop">Shop lighting</Link></div></div></main>};export default NotFound;
