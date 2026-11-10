@@ -1,0 +1,21 @@
+.category-grid {
+  align-items: start;
+}
+
+.category-grid .category-tile {
+  width: 100%;
+  height: clamp(110px, 13vw, 180px);
+  aspect-ratio: auto;
+}
+
+.category-grid .category-tile img {
+  position: absolute;
+  inset: 0;
+}
+
+.category-grid .category-tile span {
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  font-size: clamp(13px, 1.3vw, 17px);
+}

@@ -1,0 +1,226 @@
+.delivery-map-frame {
+  position: relative;
+  height: 430px;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f3f5f4;
+  box-shadow: 0 12px 32px rgb(21 34 31 / 8%);
+}
+
+.delivery-map {
+  width: 100%;
+  height: 100%;
+  background: #f3f5f4;
+  font-family: inherit;
+}
+
+.delivery-map .leaflet-control-attribution {
+  max-width: calc(100% - 60px);
+  margin: 0 10px 8px 0;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 84%);
+  color: #64716e;
+  font-size: 8px;
+  line-height: 1.4;
+  backdrop-filter: blur(8px);
+}
+
+.delivery-map .leaflet-control-attribution a {
+  color: #45534f;
+}
+
+.delivery-map .leaflet-bottom {
+  bottom: 4px;
+}
+
+.delivery-map .leaflet-control-zoom {
+  overflow: hidden;
+  margin: 0 14px 32px 0;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgb(21 34 31 / 16%);
+}
+
+.delivery-map .leaflet-control-zoom a {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  color: #18211f;
+  background: #fff;
+  line-height: 36px;
+}
+
+.delivery-map .leaflet-control-zoom a:hover {
+  background: #f2f4f3;
+}
+
+.delivery-map-search {
+  position: absolute;
+  z-index: 1000;
+  top: 14px;
+  right: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  padding: 0 16px;
+  gap: 12px;
+  border: 1px solid rgb(24 33 31 / 8%);
+  border-radius: 15px;
+  background: #fff;
+  color: #58635f;
+  box-shadow: 0 5px 20px rgb(21 34 31 / 14%);
+}
+
+.delivery-map-search-input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #18211f;
+  font: inherit;
+  font-size: 14px;
+}
+
+.delivery-map-search-input::placeholder {
+  color: #8a9490;
+}
+
+.delivery-map-search-input:focus-visible {
+  outline: 0;
+}
+
+.delivery-map-search-loading {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  border: 2px solid #dfe5e2;
+  border-top-color: #263b35;
+  border-radius: 50%;
+  animation: delivery-map-spin 0.8s linear infinite;
+}
+
+@keyframes delivery-map-spin {
+  to { transform: rotate(360deg); }
+}
+
+.delivery-map-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -1px;
+  left: -1px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 280px;
+  border: 1px solid rgb(24 33 31 / 8%);
+  border-radius: 14px;
+  background: #fff;
+  color: #18211f;
+  box-shadow: 0 8px 24px rgb(21 34 31 / 16%);
+}
+
+.delivery-map-suggestion {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  min-height: 52px;
+  padding: 8px 14px;
+  gap: 12px;
+  border: 0;
+  border-bottom: 1px solid #f0f2f1;
+  background: #fff;
+  color: #26312d;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.delivery-map-suggestion:hover,
+.delivery-map-suggestion:focus-visible {
+  background: #f5f7f6;
+}
+
+.delivery-map-suggestion-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: #f1f3f2;
+  color: #4f5b56;
+}
+
+.delivery-map-prompt {
+  position: absolute;
+  z-index: 500;
+  bottom: 22px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  padding: 9px 13px;
+  gap: 8px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(24 33 31 / 7%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 94%);
+  color: #38443f;
+  box-shadow: 0 3px 12px rgb(21 34 31 / 10%);
+  white-space: nowrap;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.delivery-map-prompt-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #18211f;
+}
+
+.delivery-map-pin {
+  border: 0;
+  background: transparent;
+}
+
+.delivery-map-pin span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #1c2924;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 32%);
+}
+
+.delivery-map-pin i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+@media (max-width: 760px) {
+  .delivery-map-frame {
+    height: min(62vh, 430px);
+    min-height: 320px;
+    border-radius: 16px;
+  }
+
+  .delivery-map-search {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-height: 50px;
+    border-radius: 13px;
+  }
+
+  .delivery-map-prompt {
+    bottom: 20px;
+  }
+}

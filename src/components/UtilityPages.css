@@ -1,0 +1,99 @@
+.delivery-date-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.delivery-date-option {
+  display: flex;
+  min-width: 0;
+  min-height: 92px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.delivery-date-option:hover {
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.delivery-date-option.is-selected {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.delivery-date-weekday,
+.delivery-date-month {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.delivery-date-option.is-selected .delivery-date-weekday,
+.delivery-date-option.is-selected .delivery-date-month {
+  color: rgb(255 255 255 / 72%);
+}
+
+.delivery-date-day {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.delivery-date-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.delivery-date-more:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.delivery-time-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.delivery-time-input {
+  max-width: 220px;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+@media (max-width: 480px) {
+  .delivery-date-options {
+    grid-template-columns: repeat(5, minmax(58px, 1fr));
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    margin-inline: -2px;
+    scrollbar-width: thin;
+  }
+
+  .delivery-date-option {
+    min-height: 82px;
+  }
+
+  .delivery-time-input {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delivery-date-option {
+    transition: none;
+  }
+}
