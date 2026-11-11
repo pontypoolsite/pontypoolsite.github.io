@@ -1,348 +1,219 @@
-import { lazy, Suspense, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { useStore } from "@/context/StoreContext";
+import { useMemo, useState } from "react";
+import { ArrowRight, Instagram, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ContactActions } from "@/components/ContactActions";
 import { useCatalog } from "@/context/CatalogContext";
-import { formatPrice } from "@/config/site";
-import type { DeliveryPoint } from "@/components/LocationAutocomplete";
-import { submitStorefrontOrder } from "@/lib/catalog-api";
-import "./UtilityPages.css";
+import { useStore } from "@/context/StoreContext";
+import { formatPrice, formatProductPrice } from "@/config/site";
 
-const LocationAutocomplete = lazy(() => import("@/components/LocationAutocomplete").then((module) => ({
-  default: module.LocationAutocomplete,
-})));
-
-function addBusinessDays(from: Date, count: number): string {
-  const date = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  let added = 0;
-  while (added < count) {
-    date.setDate(date.getDate() + 1);
-    if (date.getDay() !== 0 && date.getDay() !== 6) added += 1;
-  }
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-function deliveryDateOptions(firstDate: string, offset: number, count: number): string[] {
-  const [year, month, day] = firstDate.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const dates: string[] = [];
-  let weekdaysSkipped = 0;
-
-  while (weekdaysSkipped < offset) {
-    date.setUTCDate(date.getUTCDate() + 1);
-    if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6) weekdaysSkipped += 1;
-  }
-
-  while (dates.length < count) {
-    if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6) {
-      dates.push(date.toISOString().slice(0, 10));
-    }
-    date.setUTCDate(date.getUTCDate() + 1);
-  }
-
-  return dates;
-}
-
-function formatDeliveryDateOption(value: string) {
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return {
-    weekday: new Intl.DateTimeFormat("en-KE", { weekday: "short", timeZone: "UTC" }).format(date),
-    day: new Intl.DateTimeFormat("en-KE", { day: "numeric", timeZone: "UTC" }).format(date),
-    month: new Intl.DateTimeFormat("en-KE", { month: "short", timeZone: "UTC" }).format(date),
-  };
-}
-
-function formatDeliveryDate(value: string): string {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-KE", { dateStyle: "full" })
-    .format(new Date(year, month - 1, day));
-}
-
-function formatDeliveryTime(value: string): string {
-  const [hours, minutes] = value.split(":").map(Number);
-  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return value;
-  return new Intl.DateTimeFormat("en-KE", { hour: "numeric", minute: "2-digit" })
-    .format(new Date(2000, 0, 1, hours, minutes));
-}
-
-export function HelpPage({delivery=false}:{delivery?:boolean}){const questions=delivery?[["When will my order arrive?","Most in-stock pieces arrive within 3–5 working days. We’ll keep you updated as your order makes its way home."],["What does delivery cost?","Delivery is complimentary on qualifying orders. Any applicable delivery charge is shown before checkout."],["Can I return an item?","Of course. Unused items can be returned within 30 days of delivery. Please contact our team to arrange a return."],["What if my light arrives damaged?","Let us know as soon as possible and we’ll make it right. Our team will guide you through the next steps."]]:[["Can I get help choosing a light?","Our lighting consultants are happy to help with room measurements, finishes and bulb choices. Call us on 01495 000 000."],["Are bulbs included?","Bulb inclusion varies by fitting. Check the specifications on the product page for the exact details."],["Can I use a dimmer?","Many of our fittings can be dimmed with a compatible dimmable bulb and switch. Check the product specifications before choosing."],["Do you work with trade customers?","Yes. Please get in touch with our team to discuss trade support and project requirements."]];return <main className="narrow-page max-w-4xl"><p className="eyebrow">The practical details</p><h1 className="mt-3 font-serif text-5xl">{delivery?"Delivery & returns":"A few good questions."}</h1><p className="mt-4 text-sm text-[var(--muted)]">{delivery?"Clear, considered delivery and easy returns.":"A little more light on the details."}</p><div className="mt-9 space-y-3">{questions.map(([q,a])=><details key={q} className="rounded-lg border border-[var(--line)] p-5"><summary className="cursor-pointer font-serif text-xl">{q}</summary><p className="mt-4 text-sm leading-7 text-[var(--muted)]">{a}</p></details>)}</div><Link className="button-dark mt-8" to="/contact">Still have a question? <ArrowRight size={16}/></Link></main>}
-export function CheckoutFlow(){
-  const { cart, clearCart } = useStore();
-  const { products } = useCatalog();
-  const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [errors, setErrors] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submissionId] = useState(() => crypto.randomUUID());
-  const labels = ["Details", "Location", "Delivery", "Review"];
-  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "" });
-  const [locationPoint, setLocationPoint] = useState<DeliveryPoint | null>(null);
-  const [earliestDeliveryDate] = useState(() => addBusinessDays(new Date(), 3));
-  const [deliveryDate, setDeliveryDate] = useState(earliestDeliveryDate);
-  const [dateOffset, setDateOffset] = useState(0);
-  const [deliveryTime, setDeliveryTime] = useState("");
-  const deliveryDates = deliveryDateOptions(earliestDeliveryDate, dateOffset, 5);
-  const changeDatePage = (nextOffset: number) => {
-    const safeOffset = Math.max(0, nextOffset);
-    setDateOffset(safeOffset);
-    setDeliveryDate(deliveryDateOptions(earliestDeliveryDate, safeOffset, 5)[0]);
-  };
-  const total = cart.reduce((sum, line) => {
-    const product = products.find((item) => item.id === line.id);
-    return sum + (product ? (product.salePrice ?? product.price) * line.quantity : 0);
-  }, 0);
-  const contact = form.email.trim() || form.phone.trim();
-
-  const placeOrder = async () => {
-    if (cart.length === 0) {
-      setErrors("Your bag is empty. Add an item before sending a delivery request.");
-      return;
-    }
-
-    setSubmitting(true);
-    setErrors("");
-    try {
-      const result = await submitStorefrontOrder({
-        submissionId,
-        customerName: form.name,
-        email: form.email,
-        phone: form.phone,
-        location: form.address,
-        locationLatitude: locationPoint?.latitude ?? null,
-        locationLongitude: locationPoint?.longitude ?? null,
-        deliveryMethod: "standard",
-        deliveryDate,
-        deliveryTime,
-        items: cart.map((line) => {
-          const product = products.find((item) => item.id === line.id);
-          if (!product) throw new Error("A product in your bag is no longer available.");
-          return {
-            productId: product.catalogId,
-            variantIndex: product.variantIndex ?? null,
-            quantity: line.quantity,
-          };
-        }),
-      });
-      clearCart();
-      navigate(`/order-confirmation?reference=${encodeURIComponent(result.orderReference)}`);
-    } catch (cause) {
-      setErrors(cause instanceof Error ? cause.message : "The delivery request could not be saved.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+export function HelpPage({ delivery = false }: { delivery?: boolean }) {
+  const questions = delivery
+    ? [
+      ["When will my order arrive?", "Delivery timing is confirmed by our team when we review your area and items."],
+      ["What does delivery cost?", "Delivery coverage and fees are confirmed with you on WhatsApp or Instagram before you place an order."],
+      ["Can I return an item?", "Please contact our team to discuss returns and the next steps."],
+      ["What if my light arrives damaged?", "Let us know as soon as possible and our team will guide you through the next steps."],
+    ]
+    : [
+      ["Can I get help choosing a light?", "Our lighting team can help with room measurements, finishes and bulb choices."],
+      ["Are bulbs included?", "Bulb inclusion varies by fitting. Check the verified product details or ask us before ordering."],
+      ["Can I use a dimmer?", "Compatibility depends on the fitting and bulb. Ask our team to check the specific product."],
+      ["Do you work with trade customers?", "Contact our team to discuss trade support and project requirements."],
+    ];
 
   return (
-    <main className="narrow-page">
-      <p className="eyebrow">A little closer to home</p>
-      <h1 className="mt-3 font-serif text-5xl">Checkout</h1>
-      <div className="mt-8 grid grid-cols-4">
-        {labels.map((label, index) => (
-          <div
-            key={label}
-            className={`border-b-2 pb-3 text-xs ${index <= step ? "border-[#d6ad22] text-[var(--ink)]" : "border-[var(--line)] text-[var(--muted)]"}`}
-          >
-            <span className="mr-2">
-              {index < step ? <Check size={13} className="inline" /> : `0${index + 1}`}
-            </span>
-            {label}
-          </div>
+    <main className="narrow-page max-w-4xl">
+      <p className="eyebrow">The practical details</p>
+      <h1 className="mt-3 font-serif text-5xl">{delivery ? "Delivery & returns" : "A few good questions."}</h1>
+      <p className="mt-4 text-sm text-[var(--muted)]">
+        {delivery ? "We’ll confirm delivery coverage, fees and timing with you before an order is agreed." : "A little more light on the details."}
+      </p>
+      <div className="mt-9 space-y-3">
+        {questions.map(([question, answer]) => (
+          <details key={question} className="rounded-lg border border-[var(--line)] p-5">
+            <summary className="cursor-pointer font-serif text-xl">{question}</summary>
+            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{answer}</p>
+          </details>
         ))}
       </div>
-      <div className="mt-9 grid gap-12 md:grid-cols-[1fr_340px]">
-        <section>
-          <h2 className="font-serif text-2xl">{labels[step]}</h2>
-          {step === 0 && (
-            <div className="mt-5 space-y-4">
-              <label className="block text-xs">
-                Full name
-                <input
-                  className="form-input mt-2"
-                  value={form.name}
-                  onChange={(event) => setForm({ ...form, name: event.target.value })}
-                  autoComplete="name"
-                />
-              </label>
-              <label className="block text-xs">
-                Email address <span className="text-[var(--muted)]">(optional)</span>
-                <input
-                  className="form-input mt-2"
-                  value={form.email}
-                  type="email"
-                  autoComplete="email"
-                  onChange={(event) => setForm({ ...form, email: event.target.value })}
-                />
-              </label>
-              <label className="block text-xs">
-                Phone number <span className="text-[var(--muted)]">(optional)</span>
-                <input
-                  className="form-input mt-2"
-                  value={form.phone}
-                  type="tel"
-                  autoComplete="tel"
-                  onChange={(event) => setForm({ ...form, phone: event.target.value })}
-                />
-              </label>
-              <p className="text-xs text-[var(--muted)]">Add either an email address or a phone number so we can contact you.</p>
-            </div>
-          )}
-          {step === 1 && (
-            <div className="mt-5 space-y-4">
-              <div className="block text-xs">
-                <label htmlFor="delivery-location">Search for your place or tap the map to pin your location</label>
-                <Suspense fallback={<p className="mt-3 text-xs text-[var(--muted)]">Loading Kenya map…</p>}>
-                  <LocationAutocomplete
-                    value={form.address}
-                    point={locationPoint}
-                    onChange={(address, point) => {
-                      setForm((current) => ({ ...current, address }));
-                      setLocationPoint(point);
-                    }}
-                  />
-                </Suspense>
-              </div>
-            </div>
-          )}
-          {step === 2 && (
-            <div className="mt-5 space-y-4">
-              <section aria-labelledby="delivery-date-heading">
-                <h3 id="delivery-date-heading" className="text-sm font-semibold">Choose a delivery day</h3>
-                <p className="mt-1 text-xs text-[var(--muted)]">The earliest available date is {formatDeliveryDate(earliestDeliveryDate)}.</p>
-                <div className="delivery-date-options mt-4" role="group" aria-label="Available delivery days">
-                  {deliveryDates.map((date) => {
-                    const formatted = formatDeliveryDateOption(date);
-                    const selected = date === deliveryDate;
-                    return (
-                      <button
-                        key={date}
-                        type="button"
-                        aria-pressed={selected}
-                        aria-label={formatDeliveryDate(date)}
-                        className={`delivery-date-option ${selected ? "is-selected" : ""}`}
-                        onClick={() => setDeliveryDate(date)}
-                      >
-                        <span className="delivery-date-weekday">{formatted.weekday}</span>
-                        <span className="delivery-date-day">{formatted.day}</span>
-                        <span className="delivery-date-month">{formatted.month}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    className="delivery-date-more"
-                    disabled={dateOffset === 0}
-                    onClick={() => changeDatePage(dateOffset - 5)}
-                  >
-                    <ArrowLeft size={14} /> Earlier dates
-                  </button>
-                  <button
-                    type="button"
-                    className="delivery-date-more"
-                    onClick={() => changeDatePage(dateOffset + 5)}
-                  >
-                    More dates <ArrowRight size={14} />
-                  </button>
-                </div>
-              </section>
+      <Link className="button-dark mt-8" to="/contact">Still have a question? <ArrowRight size={16} /></Link>
+    </main>
+  );
+}
 
-              <section aria-labelledby="delivery-time-heading" className="pt-3">
-                <h3 id="delivery-time-heading" className="text-sm font-semibold">What time works best?</h3>
-                <p className="mt-1 text-xs text-[var(--muted)]">Choose any time that suits you.</p>
-                <label htmlFor="delivery-time" className="delivery-time-label mt-4">Preferred delivery time</label>
-                <input
-                  id="delivery-time"
-                  className="form-input delivery-time-input mt-2"
-                  type="time"
-                  value={deliveryTime}
-                  onChange={(event) => setDeliveryTime(event.target.value)}
-                />
-                <p className="mt-3 text-xs text-[var(--muted)]">We’ll contact you to confirm availability. Your preferred time isn’t reserved yet.</p>
-              </section>
-            </div>
-          )}
-          {step === 3 && (
-            <div className="mt-5 rounded-lg bg-[var(--wash)] p-5 text-sm leading-7">
-              <p>Location: {form.address}</p>
-              <p className="mt-2 text-xs text-[var(--muted)]">Your map location is selected.</p>
-              <p className="mt-4">We’ll save this delivery request and contact you at {contact} to confirm availability. Your preferred delivery is
-              {" "}{deliveryDate ? formatDeliveryDate(deliveryDate) : "not selected"}
-              {" "}at {deliveryTime ? formatDeliveryTime(deliveryTime) : "no time selected"}.
-              {" "}This does not reserve a slot or take payment.</p>
-            </div>
-          )}
-          {errors && <p role="alert" className="mt-4 text-sm text-red-700">{errors}</p>}
-          <div className="mt-6 flex gap-3">
-            {step > 0 && <button className="button-light" onClick={() => setStep(step - 1)}>Back</button>}
-            <button
-              className="button-dark"
-              disabled={submitting}
-              onClick={() => {
-                if (step === 0 && (!form.name.trim() || !contact)) {
-                  setErrors("Enter your name and either an email address or phone number.");
-                  return;
-                }
-                if (step === 0 && form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-                  setErrors("Enter a valid email address or clear the email field and use your phone number.");
-                  return;
-                }
-                if (step === 0 && form.phone) {
-                  const phone = form.phone.trim();
-                  const digits = phone.replace(/\D/g, "").length;
-                  if (phone.length > 40 || !/^[+()\d\s.-]+$/.test(phone) || digits < 7 || digits > 15) {
-                    setErrors("Enter a valid phone number or clear it and use your email address.");
-                    return;
-                  }
-                }
-                if (step === 1 && (!form.address.trim() || !locationPoint)) {
-                  setErrors("Search for a place in Kenya or pin your exact location on the map.");
-                  return;
-                }
-                if (step === 2 && (!deliveryDate || !deliveryTime)) {
-                  setErrors("Choose a preferred delivery day and time.");
-                  return;
-                }
-                if (step === 2 && deliveryDate < earliestDeliveryDate) {
-                  setErrors("Choose a preferred date at least three working days from today.");
-                  return;
-                }
-                setErrors("");
-                if (step === 3 && cart.some((line) => {
-                  const product = products.find((item) => item.id === line.id);
-                  return !product || line.quantity > product.quantity;
-                })) {
-                  setErrors("A cart item is no longer available in the requested quantity. Please update your bag.");
-                  return;
-                }
-                if (step < 3) setStep(step + 1);
-                else void placeOrder();
-              }}
-            >
-              {submitting ? "Saving request…" : step === 3 ? "Send delivery request" : "Continue"}
-              {!submitting && <ArrowRight size={15} />}
-            </button>
-          </div>
-        </section>
-        <aside className="h-fit rounded-xl bg-[var(--wash)] p-6">
-          <h2 className="font-serif text-2xl">Your order</h2>
-          {cart.map((line) => {
-            const product = products.find((item) => item.id === line.id);
-            return product ? (
-              <p key={line.id} className="mt-4 flex justify-between gap-3 text-xs">
-                <span>{product.name} × {line.quantity}</span>
-                <span>{formatPrice((product.salePrice ?? product.price) * line.quantity)}</span>
-              </p>
-            ) : null;
-          })}
-          <p className="mt-6 flex justify-between border-t pt-4 text-sm">
-            Total <strong>{formatPrice(total)}</strong>
-          </p>
-          <p className="mt-4 text-[10px] text-[var(--muted)]">Delivery request only · No payment is taken.</p>
-        </aside>
+export function ContactPage() {
+  const [message, setMessage] = useState("");
+  const contactMessage = `Hello Pontypool, ${message.trim() || "I have a question about your lighting."}`;
+
+  return (
+    <main className="narrow-page max-w-3xl">
+      <p className="eyebrow">We’re here to help</p>
+      <h1 className="mt-3 font-serif text-5xl">Let’s talk light.</h1>
+      <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+        Ask about a product, pricing or delivery. Your message opens in WhatsApp or Instagram for you to review and send.
+      </p>
+      <label className="mt-8 block text-xs">
+        What can we help with?
+        <textarea
+          className="form-input mt-2 min-h-32"
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          placeholder="Tell us what you’d like to know"
+        />
+      </label>
+      <div className="mt-5">
+        <ContactActions message={contactMessage} />
       </div>
     </main>
   );
 }
-export function Confirmation(){const reference=new URLSearchParams(window.location.search).get("reference");return <main className="narrow-page text-center"><div className="confirm-glow mx-auto grid h-24 w-24 place-items-center rounded-full bg-[#f2c30033] text-4xl">✦</div><p className="eyebrow mt-7">Delivery request saved</p><h1 className="mt-3 font-serif text-5xl">Thank you.</h1><p className="mx-auto mt-4 max-w-md text-sm leading-7 text-[var(--muted)]">Your request{reference ? ` ${reference}` : ""} is pending. We’ll contact you to confirm delivery availability. No delivery slot has been reserved and no payment has been taken.</p><Link to="/shop" className="button-dark mt-7">Keep exploring <ArrowRight size={16}/></Link></main>}
+
+export function CheckoutFlow() {
+  const { cart } = useStore();
+  const { products } = useCatalog();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [deliveryArea, setDeliveryArea] = useState("");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
+
+  const items = useMemo(() => cart.flatMap((line) => {
+    const product = products.find((item) => item.id === line.id);
+    return product ? [{ product, quantity: line.quantity }] : [];
+  }), [cart, products]);
+  const subtotal = items.reduce((sum, item) => (
+    sum + (item.product.salePrice ?? item.product.price) * item.quantity
+  ), 0);
+  const hasUnpricedItems = items.some(({ product }) => (product.salePrice ?? product.price) <= 0);
+  const unavailable = items.some(({ product, quantity }) => quantity > product.quantity);
+  const message = [
+    "Hello Pontypool, I’d like to request these items:",
+    "",
+    ...items.map(({ product, quantity }) => {
+      const price = product.salePrice ?? product.price;
+      const itemNumber = product.variantIndex === undefined
+        ? `Item #${product.catalogId}`
+        : `Item #${product.catalogId}, option ${product.variantIndex + 1}`;
+      const lineTotal = price > 0 ? ` · ${formatPrice(price * quantity)}` : " · price to confirm";
+      return `• ${quantity} × ${product.name} (${itemNumber}) — ${formatProductPrice(price)} each${lineTotal}`;
+    }),
+    "",
+    hasUnpricedItems
+      ? "Some prices are not listed; please confirm the total."
+      : `Items subtotal: ${formatPrice(subtotal)} (delivery not included)`,
+    `Name: ${name.trim()}`,
+    `Customer phone: ${phone.trim()}`,
+    `Delivery area: ${deliveryArea.trim() || "Please ask me"}`,
+    `Note: ${note.trim() || "None"}`,
+    "",
+    "Please confirm availability, delivery coverage and delivery fee before I place the order.",
+  ].join("\n");
+
+  const validateAndSend = () => {
+    if (!name.trim() || !phone.trim()) {
+      setError("Enter your name and phone number so the team can identify your request.");
+      return false;
+    }
+    const digits = phone.replace(/\D/g, "").length;
+    if (digits < 7 || digits > 15) {
+      setError("Enter a valid phone number, including your country code.");
+      return false;
+    }
+    if (unavailable) {
+      setError("A requested quantity is no longer available. Update your bag before continuing.");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  if (items.length === 0) {
+    return (
+      <main className="narrow-page">
+        <p className="eyebrow">Your order request</p>
+        <h1 className="mt-3 font-serif text-5xl">Your bag is empty.</h1>
+        <p className="mt-4 text-sm text-[var(--muted)]">Add a light to your bag before contacting us about an order.</p>
+        <Link className="button-dark mt-7" to="/shop">Browse lighting <ArrowRight size={16} /></Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="narrow-page">
+      <p className="eyebrow">A personal order, made simple</p>
+      <h1 className="mt-3 font-serif text-5xl">Review your request</h1>
+      <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">
+        Check the quantities and add your details. We’ll open a message with the item numbers,
+        quantities and prices so our team can confirm stock and delivery with you.
+      </p>
+
+      <div className="mt-9 grid gap-10 md:grid-cols-[1fr_360px]">
+        <section>
+          <h2 className="font-serif text-2xl">Items in your bag</h2>
+          <div className="mt-4 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {items.map(({ product, quantity }) => (
+              <div key={product.id} className="flex justify-between gap-5 py-5 text-sm">
+                <div>
+                  <Link to={`/product/${product.slug}`} className="font-medium hover:underline">{product.name}</Link>
+                  <p className="mt-1 text-xs text-[var(--muted)]">
+                    Item #{product.catalogId} · Quantity {quantity}
+                  </p>
+                </div>
+                <span className="shrink-0">{formatProductPrice(product.salePrice ?? product.price)}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 flex justify-between text-sm">
+            <span>{hasUnpricedItems ? "Subtotal (some prices to confirm)" : "Items subtotal"}</span>
+            <strong>{hasUnpricedItems ? "To be confirmed" : formatPrice(subtotal)}</strong>
+          </p>
+          <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
+            Delivery fee and availability are confirmed in the chat. No online payment is taken.
+          </p>
+        </section>
+
+        <section className="h-fit rounded-xl border border-[var(--line)] bg-[var(--wash)] p-6">
+          <h2 className="font-serif text-2xl">Your details</h2>
+          <div className="mt-5 space-y-4">
+            <label className="block text-xs">
+              Name
+              <input className="form-input mt-2" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} />
+            </label>
+            <label className="block text-xs">
+              Phone number
+              <input className="form-input mt-2" type="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Include country code" />
+            </label>
+            <label className="block text-xs">
+              Delivery area <span className="text-[var(--muted)]">(optional)</span>
+              <input className="form-input mt-2" autoComplete="address-level2" value={deliveryArea} onChange={(event) => setDeliveryArea(event.target.value)} placeholder="Town, county or neighbourhood" />
+            </label>
+            <label className="block text-xs">
+              Note for the team <span className="text-[var(--muted)]">(optional)</span>
+              <textarea className="form-input mt-2 min-h-24" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Finish, timing, or anything else we should know" />
+            </label>
+          </div>
+          {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
+          {unavailable && <p role="alert" className="mt-4 text-sm text-red-700">Some items in your bag are no longer available in that quantity.</p>}
+
+          <h3 className="mt-7 font-serif text-xl">Message preview</h3>
+          <pre className="mt-3 max-h-52 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-[var(--line)] bg-[var(--surface)] p-3 text-xs leading-5">{message}</pre>
+          <div className="mt-5">
+            <ContactActions
+              message={message}
+              whatsappLabel="Send order request in WhatsApp"
+              onBeforeOpen={validateAndSend}
+              disabled={unavailable}
+            />
+          </div>
+          <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-[var(--muted)]">
+            <MessageCircle size={15} className="mt-0.5 shrink-0" />
+            Your message is prepared, not sent automatically. Review it and press Send in WhatsApp.
+          </div>
+          <p className="mt-2 flex items-center gap-2 text-xs text-[var(--muted)]">
+            <Instagram size={14} /> For Instagram, the message is copied for you to paste into the chat.
+          </p>
+        </section>
+      </div>
+    </main>
+  );
+}

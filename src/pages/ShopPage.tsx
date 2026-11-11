@@ -10,6 +10,11 @@ import type { Product } from "@/data/products";
 const roomOptions = ["Living room", "Bedroom", "Kitchen", "Dining", "Outdoor", "Office"];
 const styleOptions = ["Modern", "Traditional", "Industrial", "Vintage", "Minimalist"];
 const finishOptions = ["Brass", "Black", "Chrome", "Gold", "White"];
+const purposeOptions = [
+  { id: "main", label: "Main light", terms: ["ceiling", "pendant", "chandelier", "flush", "panel", "downlight"] },
+  { id: "task", label: "Task lighting", terms: ["desk", "reading", "table lamp", "under cabinet", "spot", "track"] },
+  { id: "accent", label: "Ambient & accent", terms: ["wall bracket", "sconce", "wall light", "floor lamp", "table lamp", "picture"] },
+];
 
 const roomTerms: Record<string, string[]> = {
   "Living room": ["pendant", "chandelier", "wall bracket", "ceiling light", "floor lamp", "table lamp"],
@@ -44,6 +49,14 @@ function matchesStyle(product: Product, style: string) {
   return (styleTerms[style] ?? [style.toLowerCase()]).some((term) => text.includes(term));
 }
 
+function matchesPurpose(product: Product, purpose: string) {
+  if (!purpose) return true;
+  const option = purposeOptions.find((item) => item.id === purpose);
+  if (!option) return true;
+  const text = productSearchText(product);
+  return option.terms.some((term) => text.includes(term));
+}
+
 type FiltersProps = {
   categories: { id: number; name: string }[];
   hasUncategorized: boolean;
@@ -53,11 +66,13 @@ type FiltersProps = {
   inStock: boolean;
   room: string;
   style: string;
+  purpose: string;
   onMaxChange: (value: number | null) => void;
   onFinishChange: (value: string) => void;
   onStockChange: (value: boolean) => void;
   onRoomChange: (value: string) => void;
   onStyleChange: (value: string) => void;
+  onPurposeChange: (value: string) => void;
   onClear: () => void;
 };
 
@@ -70,11 +85,13 @@ function FilterOptions({
   inStock,
   room,
   style,
+  purpose,
   onMaxChange,
   onFinishChange,
   onStockChange,
   onRoomChange,
   onStyleChange,
+  onPurposeChange,
   onClear,
 }: FiltersProps) {
   return (
@@ -128,6 +145,18 @@ function FilterOptions({
         </label>
       ))}
 
+      <label className="filter-title mt-7">Lighting purpose</label>
+      {purposeOptions.map((option) => (
+        <label key={option.id} className="filter-check">
+          <input
+            type="checkbox"
+            checked={purpose === option.id}
+            onChange={() => onPurposeChange(purpose === option.id ? "" : option.id)}
+          />
+          {option.label}
+        </label>
+      ))}
+
       <label className="filter-title mt-7">Finish</label>
       {finishOptions.map((option) => (
         <label key={option} className="filter-check">
@@ -154,12 +183,14 @@ export default function ShopPage() {
   const [finish, setFinish] = useState("");
   const [room, setRoom] = useState(searchParams.get("room") ?? "");
   const [style, setStyle] = useState(searchParams.get("style") ?? "");
+  const [purpose, setPurpose] = useState(searchParams.get("purpose") ?? "");
   const [list, setList] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     setRoom(searchParams.get("room") ?? "");
     setStyle(searchParams.get("style") ?? "");
+    setPurpose(searchParams.get("purpose") ?? "");
   }, [searchParams]);
 
   useEffect(() => {
@@ -183,22 +214,24 @@ export default function ShopPage() {
       && (!inStock || product.quantity > 0)
       && matchesRoom(product, room)
       && matchesStyle(product, style)
+      && matchesPurpose(product, purpose)
     ));
 
     if (sort === "Price low-high") items.sort((a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price));
     if (sort === "Price high-low") items.sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price));
     if (sort === "Newest") items.sort((a, b) => Number(b.isNew) - Number(a.isNew));
     return items;
-  }, [products, category, max, finish, inStock, room, style, sort]);
+  }, [products, category, max, finish, inStock, room, style, purpose, sort]);
 
   const activeFilters = Number(inStock)
     + Number(max !== null)
     + Number(Boolean(finish))
     + Number(Boolean(room))
-    + Number(Boolean(style));
-  const title = category || room || style || "All lighting";
+    + Number(Boolean(style))
+    + Number(Boolean(purpose));
+  const title = category || room || style || purposeOptions.find((option) => option.id === purpose)?.label || "All lighting";
 
-  const updateQueryFilter = (key: "room" | "style", value: string) => {
+  const updateQueryFilter = (key: "room" | "style" | "purpose", value: string) => {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value);
     else next.delete(key);
@@ -211,6 +244,7 @@ export default function ShopPage() {
     const next = new URLSearchParams(searchParams);
     next.delete("room");
     next.delete("style");
+    next.delete("purpose");
     setSearchParams(next, { replace: true });
   };
 
@@ -223,11 +257,13 @@ export default function ShopPage() {
     inStock,
     room,
     style,
+    purpose,
     onMaxChange: setMax,
     onFinishChange: setFinish,
     onStockChange: setInStock,
     onRoomChange: (value) => updateQueryFilter("room", value),
     onStyleChange: (value) => updateQueryFilter("style", value),
+    onPurposeChange: (value) => updateQueryFilter("purpose", value),
     onClear: clearFilters,
   };
 

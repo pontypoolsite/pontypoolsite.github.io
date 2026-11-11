@@ -34,6 +34,8 @@ jobs:
       - name: Build site
         env:
           VITE_STOREFRONT_API_URL: ${{ vars.VITE_STOREFRONT_API_URL || 'https://br-blue-base-b451rqwn-storefront.compute.c-6.us-east-2.aws.neon.tech/' }}
+          VITE_WHATSAPP_NUMBER: ${{ vars.VITE_WHATSAPP_NUMBER }}
+          VITE_INSTAGRAM_URL: ${{ vars.VITE_INSTAGRAM_URL }}
         run: |
           pnpm run build
           cp dist/index.html dist/404.html

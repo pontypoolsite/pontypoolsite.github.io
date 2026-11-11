@@ -1,11 +1,207 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
+import { ContactActions } from "@/components/ContactActions";
 import { useCatalog } from "@/context/CatalogContext";
-import { formatProductPrice } from "@/config/site";
 import { useStore } from "@/context/StoreContext";
+import { formatProductPrice } from "@/config/site";
 
-function RoomDemo(){const[temp,setTemp]=useState(2700);const[brightness,setBrightness]=useState(65);const[fixture,setFixture]=useState("Pendant");const cool=(temp-2700)/3800;return <section className="room-section"><div><p className="eyebrow">Find your perfect glow</p><h2 className="mt-2 font-serif text-4xl">Light up your room.</h2><p className="mt-3 max-w-sm text-sm leading-6 text-[var(--muted)]">Dial in the atmosphere, from a soft evening glow to bright, clear daylight.</p><div className="mt-6 flex flex-wrap gap-2">{["Pendant","Chandelier","Wall bracket"].map(x=><button key={x} onClick={()=>setFixture(x)} className={`rounded-full border px-4 py-2 text-xs ${fixture===x?"border-[#c99f00] bg-[#f2c30022]":"border-[var(--line)]"}`}>{x}</button>)}</div><label className="mt-6 block text-xs">Colour temperature · {temp}K<input className="mt-2 block w-full accent-[#d7a900]" type="range" min="2700" max="6500" step="100" value={temp} onChange={e=>setTemp(+e.target.value)}/></label><label className="mt-5 block text-xs">Brightness · {brightness}%<input className="mt-2 block w-full accent-[#d7a900]" type="range" min="10" max="100" value={brightness} onChange={e=>setBrightness(+e.target.value)}/></label><p className="mt-3 text-[10px] text-[var(--muted)]">A little slider magic. Real rooms may vary.</p></div><div className={`room-scene fixture-${fixture.toLowerCase().replace(" ","-")}`} style={{backgroundColor:`rgb(${Math.round(248+cool*5)},${Math.round(231-cool*28)},${Math.round(205-cool*55)})`,boxShadow:`inset 0 0 100px rgba(255,${Math.round(179-cool*100)},50,${brightness/250})`}} aria-label={`Room lighting preview at ${temp} kelvin and ${brightness} percent brightness`}><div className="room-window"/><div className="room-lamp"><span/></div><div className="room-sofa"/><div className="room-table"/><span className="room-k">{fixture} · {temp}K</span></div></section>}
-function CompareBar(){const {products}=useCatalog();const{compare,toggleCompare}=useStore();const[show,setShow]=useState(false);const items=products.filter(p=>compare.includes(p.id));if(!items.length)return null;return <><div className="compare-bar"><span>{items.length} of 3 selected to compare</span>{items.map(p=><span key={p.id} className="compare-pill">{p.name}<button aria-label={`Remove ${p.name}`} onClick={()=>toggleCompare(p.id)}>×</button></span>)}<button className="button-dark" onClick={()=>setShow(true)}>Compare now</button><button aria-label="Clear comparison" onClick={()=>items.forEach(p=>toggleCompare(p.id))}><X size={16}/></button></div>{show&&<div className="fixed inset-0 z-[85] grid place-items-center bg-black/50 p-4" onClick={()=>setShow(false)}><section className="max-h-[85vh] w-full max-w-5xl overflow-auto rounded-xl bg-[var(--surface)] p-6" onClick={e=>e.stopPropagation()}><div className="flex justify-between"><h2 className="font-serif text-3xl">A closer look</h2><button onClick={()=>setShow(false)} aria-label="Close comparison"><X/></button></div><div className="mt-5 grid" style={{gridTemplateColumns:`130px repeat(${items.length},minmax(150px,1fr))`}}>{["Product","Price","Category","Finishes","Material","Wattage","Bulb base","Dimensions"].map((label,index)=><div key={label} className="contents">{[label,...items.map(p=>index===0?p.name:index===1?formatProductPrice(p.salePrice??p.price):index===2?p.category:index===3?p.finishes.join(", "):p.specs[["","","","","material","wattage","bulbBase","dimensions"][index] as keyof typeof p.specs] as string)].map((value,i)=><div key={`${label}-${i}`} className="border-b border-[var(--line)] px-2 py-3 text-xs"><strong>{i===0?value:undefined}</strong>{i>0?value:undefined}</div>)}</div>)}</div></section></div>}</>}
-function ProductExtras(){const {products}=useCatalog();const location=useLocation();const slug=location.pathname.split("/").pop();const product=products.find(p=>p.slug===slug);const{recent,remember}=useStore();const[dimensions,setDimensions]=useState({length:4,width:4,height:2.5});const[showFit,setShowFit]=useState(false);const[room,setRoom]=useState("Living room");const[review,setReview]=useState("");const[reviews,setReviews]=useState(()=>JSON.parse(localStorage.getItem("pontypool-reviews")||"[]") as {text:string;stars:number}[]);const[stars,setStars]=useState(5);useEffect(()=>{if(product)remember(product.id)},[product?.id]);if(!product)return null;const area=dimensions.length*dimensions.width;const diameter=Math.round((dimensions.length+dimensions.width)*8);const lumens=Math.round(area*(room==="Kitchen"||room==="Office"?300:room==="Bedroom"?120:180));const recently=recent.filter(id=>id!==product.id).map(id=>products.find(p=>p.id===id)).filter((p):p is typeof products[number]=>Boolean(p)).slice(0,4);return <><section className="narrow-page pt-4"><div className="grid gap-8 border-y border-[var(--line)] py-8 md:grid-cols-2"><div><p className="eyebrow">Thoughtful sizing</p><h2 className="mt-2 font-serif text-3xl">Will it fit your room?</h2><p className="mt-2 text-sm text-[var(--muted)]">A quick starting point for choosing a fixture that feels in proportion.</p><div className="mt-5 grid grid-cols-3 gap-3">{([["Room length (m)","length"],["Room width (m)","width"],["Ceiling (m)","height"]] as const).map(([label,key])=><label key={key} className="text-[10px]">{label}<input className="form-input mt-2 px-2" type="number" min="1" max="20" step=".1" value={dimensions[key]} onChange={e=>setDimensions({...dimensions,[key]:Number(e.target.value)})}/></label>)}</div><label className="mt-4 block text-xs">Room type<select className="form-input mt-2" value={room} onChange={e=>setRoom(e.target.value)}>{["Living room","Bedroom","Kitchen","Office"].map(x=><option key={x}>{x}</option>)}</select></label><button className="button-dark mt-4" onClick={()=>setShowFit(!showFit)}>{showFit?"Update recommendation":"Calculate my room"}</button>{showFit&&<p className="mt-4 rounded-lg bg-[var(--wash)] p-4 text-sm">Try a fixture around <strong>{diameter} cm</strong> across, with roughly <strong>{lumens.toLocaleString()} lumens</strong> for {room.toLowerCase()} ambient light.</p>}</div><div><p className="eyebrow">Delivery estimate</p><p className="mt-3 font-serif text-2xl">Arrives in 3–5 working days</p><p className="mt-2 text-sm text-[var(--muted)]">Complimentary delivery on qualifying orders. We’ll confirm timing at checkout.</p><div className="mt-7 border-t pt-5"><p className="eyebrow">Customer reviews</p><p className="mt-2 text-2xl text-[#b58b14]">★★★★★ <span className="text-sm text-[var(--muted)]">5.0 · {reviews.length+12} reviews</span></p><div className="mt-3 space-y-2">{[5,4,3].map(n=><div key={n} className="flex items-center gap-2 text-[10px]">{n} stars <span className="h-1.5 flex-1 rounded bg-[var(--line)]"><span className="block h-full rounded bg-[#d6ad22]" style={{width:n===5?"86%":"10%"}}/></span>{n===5?"86%":"10%"}</div>)}</div></div></div></div><div className="mt-8"><h3 className="font-serif text-2xl">A note from your home</h3><form className="mt-3 flex flex-wrap gap-3" onSubmit={e=>{e.preventDefault();const next=[{text:review,stars},...reviews];setReviews(next);localStorage.setItem("pontypool-reviews",JSON.stringify(next));setReview("")}}><select aria-label="Rating" value={stars} onChange={e=>setStars(+e.target.value)} className="form-input w-32"><option value={5}>★★★★★</option><option value={4}>★★★★☆</option><option value={3}>★★★☆☆</option></select><input aria-label="Write a review" required value={review} onChange={e=>setReview(e.target.value)} className="form-input min-w-[220px] flex-1" placeholder="Write a review (saved on this device)"/><button className="button-dark">Submit review</button></form>{reviews.slice(0,3).map((r,i)=><p key={i} className="mt-3 border-b border-[var(--line)] py-3 text-sm">{"★".repeat(r.stars)}<span className="ml-3 text-[var(--muted)]">{r.text}</span></p>)}</div>{recently.length>0&&<div className="mt-10"><h3 className="mb-5 font-serif text-2xl">Recently viewed</h3><div className="grid grid-cols-2 gap-4 md:grid-cols-4">{recently.map(p=><Link key={p.id} to={`/product/${p.slug}`} className="rounded-lg bg-[var(--wash)] p-4 text-sm">{p.name}<span className="mt-2 block text-xs text-[var(--muted)]">{formatProductPrice(p.price)}</span></Link>)}</div></div>}</section></>}
-export function InteractiveFeatures(){const location=useLocation();useEffect(()=>{const elements=document.querySelectorAll(".page-section,.product-card,.article-card,.room-studio");const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add("is-visible");observer.unobserve(entry.target)}}),{threshold:.12});elements.forEach(el=>{el.classList.add("reveal");observer.observe(el)});return()=>observer.disconnect()},[location.pathname]);return <>{location.pathname.startsWith("/product/")&&<ProductExtras/>}<CompareBar/></>}
+function CompareBar() {
+  const { products } = useCatalog();
+  const { compare, toggleCompare } = useStore();
+  const [show, setShow] = useState(false);
+  const items = products.filter((product) => compare.includes(product.id));
+  if (!items.length) return null;
+
+  const rows = [
+    { label: "Product", value: (index: number) => items[index].name },
+    { label: "Price", value: (index: number) => formatProductPrice(items[index].salePrice ?? items[index].price) },
+    { label: "Category", value: (index: number) => items[index].category },
+    { label: "Finishes", value: (index: number) => items[index].finishes.join(", ") || "Not listed" },
+    { label: "Material", value: (index: number) => items[index].specs.material || "Not listed" },
+    { label: "Wattage", value: (index: number) => items[index].specs.wattage || "Not listed" },
+    { label: "Bulb base", value: (index: number) => items[index].specs.bulbBase || "Not listed" },
+    { label: "Dimensions", value: (index: number) => items[index].specs.dimensions || "Not listed" },
+  ];
+
+  return (
+    <>
+      <div className="compare-bar">
+        <span>{items.length} of 3 selected to compare</span>
+        {items.map((product) => (
+          <span key={product.id} className="compare-pill">
+            {product.name}
+            <button type="button" aria-label={`Remove ${product.name}`} onClick={() => toggleCompare(product.id)}>×</button>
+          </span>
+        ))}
+        <button type="button" className="button-dark" onClick={() => setShow(true)}>Compare now</button>
+        <button type="button" aria-label="Clear comparison" onClick={() => items.forEach((product) => toggleCompare(product.id))}>
+          <X size={16} />
+        </button>
+      </div>
+      {show && (
+        <div className="fixed inset-0 z-[85] grid place-items-center bg-black/50 p-4" onClick={() => setShow(false)}>
+          <section className="max-h-[85vh] w-full max-w-5xl overflow-auto rounded-xl bg-[var(--surface)] p-6" onClick={(event) => event.stopPropagation()}>
+            <div className="flex justify-between">
+              <h2 className="font-serif text-3xl">Compare these lights</h2>
+              <button type="button" onClick={() => setShow(false)} aria-label="Close comparison"><X /></button>
+            </div>
+            <div className="mt-5 grid" style={{ gridTemplateColumns: `130px repeat(${items.length}, minmax(150px, 1fr))` }}>
+              {rows.map((row) => (
+                <div key={row.label} className="contents">
+                  <strong className="border-b border-[var(--line)] px-2 py-3 text-xs">{row.label}</strong>
+                  {items.map((product, index) => (
+                    <div key={product.id} className="border-b border-[var(--line)] px-2 py-3 text-xs">{row.value(index)}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ProductExtras() {
+  const { products } = useCatalog();
+  const location = useLocation();
+  const slug = location.pathname.split("/").pop();
+  const { recent, remember } = useStore();
+  const [deliveryArea, setDeliveryArea] = useState("");
+  const [deliveryMessageReady, setDeliveryMessageReady] = useState(false);
+  const product = products.find((item) => item.slug === slug);
+  const productId = product?.id;
+
+  useEffect(() => {
+    if (productId) remember(productId);
+  }, [productId, remember]);
+
+  if (!product) return null;
+
+  const specifications = [
+    ["Dimensions", product.specs.dimensions],
+    ["Wattage", product.specs.wattage],
+    ["Bulb base", product.specs.bulbBase],
+    ["Voltage", product.specs.voltage],
+    ["Material", product.specs.material],
+  ].filter(([, value]) => value.trim());
+  const recentlyViewed = recent
+    .filter((id) => id !== product.id)
+    .map((id) => products.find((item) => item.id === id))
+    .filter((item): item is (typeof products)[number] => Boolean(item))
+    .slice(0, 4);
+  const deliveryMessage = [
+    `Hello Pontypool, please confirm delivery coverage, fee and timing for ${deliveryArea.trim() || "my area"}.`,
+    `Product: ${product.name} (Item #${product.catalogId})`,
+  ].join("\n");
+
+  return (
+    <section className="narrow-page pt-6">
+      <div className="grid gap-8 border-y border-[var(--line)] py-8 md:grid-cols-2">
+        <div>
+          <p className="eyebrow">Product information</p>
+          <h2 className="mt-2 font-serif text-3xl">The details that matter.</h2>
+          {specifications.length ? (
+            <dl className="mt-4 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+              {specifications.map(([label, value]) => (
+                <div key={label} className="flex justify-between gap-5 py-3 text-sm">
+                  <dt className="text-[var(--muted)]">{label}</dt>
+                  <dd className="text-right">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              Verified measurements and bulb details are not listed yet. Ask us to confirm before ordering.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <p className="eyebrow">Check your delivery</p>
+          <h2 className="mt-2 font-serif text-3xl">Is delivery available?</h2>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+            Enter your town or area and we’ll confirm coverage, delivery fee and timing in chat.
+          </p>
+          <label className="mt-4 block text-xs">
+            Town, county or neighbourhood
+            <input
+              className="form-input mt-2"
+              value={deliveryArea}
+              onChange={(event) => {
+                setDeliveryArea(event.target.value);
+                setDeliveryMessageReady(false);
+              }}
+              placeholder="For example, your town or neighbourhood"
+            />
+          </label>
+          <button
+            type="button"
+            className="button-light mt-3"
+            disabled={!deliveryArea.trim()}
+            onClick={() => setDeliveryMessageReady(true)}
+          >
+            Prepare a delivery question
+          </button>
+          {deliveryMessageReady && (
+            <div className="mt-4">
+              <ContactActions message={deliveryMessage} whatsappLabel="Ask about delivery" />
+            </div>
+          )}
+          {!product.price && (
+            <div className="mt-5 border-t border-[var(--line)] pt-4">
+              <p className="mb-3 text-sm text-[var(--muted)]">This item is price on request.</p>
+              <ContactActions
+                message={`Hello Pontypool, please share a quote for ${product.name} (Item #${product.catalogId}).`}
+                whatsappLabel="Ask for a price"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {recentlyViewed.length > 0 && (
+        <div className="mt-10">
+          <h2 className="mb-5 font-serif text-2xl">Recently viewed</h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {recentlyViewed.map((item) => (
+              <Link key={item.id} to={`/product/${item.slug}`} className="rounded-lg bg-[var(--wash)] p-4 text-sm">
+                {item.name}
+                <span className="mt-2 block text-xs text-[var(--muted)]">{formatProductPrice(item.salePrice ?? item.price)}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function InteractiveFeatures() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const elements = document.querySelectorAll(".page-section, .product-card, .article-card, .room-finder");
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    elements.forEach((element) => {
+      element.classList.add("reveal");
+      observer.observe(element);
+    });
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
+  return (
+    <>
+      {location.pathname.startsWith("/product/") && <ProductExtras />}
+      <CompareBar />
+    </>
+  );
+}

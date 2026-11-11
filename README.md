@@ -16,13 +16,14 @@ The public storefront reads live products, images, prices, categories, variants,
 and stock from the same Neon database used by the inventory system. Catalog
 changes made in either system become visible in the storefront on its next
 refresh (within about 45 seconds). The inventory-system project is not changed.
-The inventory tables are not altered. The storefront uses separate order-request
-tables created by `database/001-storefront-orders.sql`.
+The inventory tables are not altered.
 
-The `storefront` Neon Function's public catalog endpoints are read-only. Its
-public checkout endpoint can only save delivery requests in the separate
-storefront order tables; private catalog and request-management endpoints
-require sign-in. Configure `DATABASE_URL` with a dedicated database role that has:
+The `storefront` Neon Function's public catalog endpoints are read-only; private
+catalog and request-management endpoints require sign-in. Storefront checkout
+now opens a customer-prepared WhatsApp or Instagram message and does not create
+an online order, take payment, or submit new delivery requests to Neon. Existing
+order-request API and database tables are retained for prior requests. Configure
+`DATABASE_URL` with a dedicated database role that has:
 
 - `SELECT` on `products`, `categories`, `sales`, and `reseller_purchases`;
 - `INSERT`, `UPDATE`, and `DELETE` on `products` and `categories`;
@@ -53,30 +54,10 @@ sales records. Reseller availability is calculated from purchases minus sales.
    with the inventory ledger.
 
 The product table has no description column, so product descriptions remain
-blank. Checkout saves a delivery request and an item/price snapshot. New
-requests appear in `/admin` as pending; staff can confirm or decline them.
-Selecting a preferred date/time does not reserve a slot or inventory, confirming
-a request does not deduct stock, and no payment or automated email is collected
-or sent. Staff must contact the customer to confirm the delivery details.
-Apply `database/001-storefront-orders.sql` before deploying the order API. For
-existing installations, apply `database/002-free-delivery-time.sql` before
-deploying updates that accept a customer-selected delivery time.
-
-### Checkout location suggestions
-
-The checkout Location field provides debounced place suggestions from the
-Photon geocoding service using OpenStreetMap data; suggestions are restricted to
-Kenya. The checkout includes an interactive map where customers can select a
-suggestion, tap to place a pin, or drag the pin to adjust it. Photon verifies
-search suggestions; map pins and submitted coordinates are checked against a
-local Kenya boundary polygon, so map selection and checkout do not depend on a
-server-side geocoding request. Search text is sent to Photon; the Esri street
-basemap uses OpenStreetMap and other credited map data. The boundary
-is derived from Natural Earth 10m Admin-0 country data (public domain); small
-coastal areas around Mombasa and Lamu are included because small urban islands
-are omitted from the generalized country polygon. The selected delivery day
-and exact customer-selected time are saved as preferences on the request, not
-reserved as a confirmed delivery slot.
+blank unless supplied by the catalog. Order requests are composed in the
+customer's messaging app; the customer must review and send the message. Staff
+confirm stock, pricing, delivery coverage and delivery fees in chat. No online
+payment is taken and delivery is not booked automatically.
 
 ## Quick preview on GitHub Pages
 
@@ -90,8 +71,11 @@ add `VITE_STOREFRONT_API_URL` with the public URL of the deployed Neon
 `storefront` function. This URL is public, but `DATABASE_URL`,
 `ADMIN_PASSWORD`, and `ADMIN_TOKEN_SECRET` must only be configured in the
 Neon Function's server-side environment and must never be added as `VITE_`
-variables. The storefront function allows the GitHub Pages origin for
-cross-origin catalog and checkout requests.
+variables. Add `VITE_WHATSAPP_NUMBER` using the business number in international
+format with digits only (for example, `2547XXXXXXXX`) and/or `VITE_INSTAGRAM_URL`
+using the public Instagram username or profile URL. These are public contact
+details, not secrets. The workflow embeds them in the static site build. The
+storefront function allows the GitHub Pages origin for cross-origin catalog requests.
 
 The production workflow uses the minimum GitHub Actions permissions needed to
 build and publish the static site. Enable GitHub Pages with **Build and
@@ -100,13 +84,15 @@ preview searchable without signing in.
 
 ## Storefront discovery features
 
-The storefront includes room and style entry points, mobile filter sheets, grid
-and list product views, recently viewed items, and shareable product and
-wishlist links. Product specifications can be entered per variant in the admin
-Variants JSON using `dimensions`, `wattage`, `bulbBase`, `voltage`, and
-`material`; only add details verified from the product information. The home
-page's interactive 3D room is loaded only when a visitor opens it, to keep
-initial page loading lighter.
+The storefront includes a room-and-purpose finder, room/style/finish/stock/price
+filters, mobile filter sheets, grid and list product views, recently viewed and
+related items, and shareable product and wishlist links. Verified per-variant
+specifications (`dimensions`, `wattage`, `bulbBase`, `voltage`, and `material`)
+appear on product pages; only add details verified from the product information.
+Customers review their bag and message the business to request an order. The
+message contains product names and IDs, quantities, listed prices, customer
+contact details and delivery area. Delivery coverage and fees are confirmed in
+the conversation; WhatsApp/Instagram still requires the customer to tap Send.
 
 ## Deploy to Truehost cPanel
 

@@ -10,7 +10,7 @@ import { StoreProvider } from "@/context/StoreContext";
 import { CatalogProvider } from "@/context/CatalogContext";
 import { CatalogStatus } from "@/components/CatalogStatus";
 import { InteractiveFeatures } from "@/components/InteractiveFeatures";
-import { CheckoutFlow, Confirmation, HelpPage } from "@/components/UtilityPages";
+import { CheckoutFlow, ContactPage, HelpPage } from "@/components/UtilityPages";
 import Admin from "@/pages/Admin";
 const queryClient = new QueryClient();
 const App = () => (
@@ -28,13 +28,12 @@ const App = () => (
               <Route path="/product/:slug" element={<Index />} />
               <Route path="/cart" element={<Index />} />
               <Route path="/checkout" element={<CheckoutFlow />} />
-              <Route path="/order-confirmation" element={<Confirmation />} />
               <Route path="/faq" element={<HelpPage />} />
               <Route path="/delivery" element={<HelpPage delivery />} />
               <Route path="/wishlist" element={<Index />} />
               <Route path="/search" element={<Index />} />
               <Route path="/account" element={<Index />} />
-              <Route path="/contact" element={<Index />} />
+              <Route path="/contact" element={<ContactPage />} />
               <Route path="/about" element={<Index />} />
               <Route path="/inspiration" element={<Index />} />
               <Route path="/article/:slug" element={<Index />} />

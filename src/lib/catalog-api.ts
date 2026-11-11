@@ -52,40 +52,6 @@ export type StorefrontOrder = {
   items: StorefrontOrderItem[];
 };
 
-export type StorefrontOrderRequest = {
-  submissionId: string;
-  customerName: string;
-  email: string;
-  phone: string;
-  location: string;
-  locationLatitude: number | null;
-  locationLongitude: number | null;
-  deliveryMethod: "standard" | "express";
-  deliveryDate: string;
-  deliveryTime: string;
-  items: { productId: number; variantIndex: number | null; quantity: number }[];
-};
-
-export async function submitStorefrontOrder(request: StorefrontOrderRequest): Promise<{
-  orderReference: string;
-  status: "pending" | "confirmed" | "declined";
-}> {
-  const baseUrl = import.meta.env.VITE_STOREFRONT_API_URL?.trim().replace(/\/+$/, "");
-  if (!baseUrl) throw new Error("VITE_STOREFRONT_API_URL is not configured for the storefront.");
-
-  const response = await fetch(`${baseUrl}/orders`, {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-    cache: "no-store",
-  });
-  const payload = await response.json() as { orderReference?: string; status?: "pending" | "confirmed" | "declined"; error?: string };
-  if (!response.ok || !payload.orderReference || !payload.status) {
-    throw new Error(payload.error || `Could not save your delivery request (${response.status}).`);
-  }
-  return { orderReference: payload.orderReference, status: payload.status };
-}
-
 async function fetchCatalog<T>(resource: "products" | "categories"): Promise<T[]> {
   const baseUrl = import.meta.env.VITE_STOREFRONT_API_URL?.trim().replace(/\/+$/, "");
   if (!baseUrl) {

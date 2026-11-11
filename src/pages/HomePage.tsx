@@ -1,12 +1,10 @@
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProductGrid } from "@/components/ProductCard";
 import { useCatalog } from "@/context/CatalogContext";
 import { useStore } from "@/context/StoreContext";
 import "@/components/Showroom.css";
-
-const RoomScene = lazy(() => import("@/components/RoomScene3D"));
 
 const photo = (id: string, width = 900) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=85`;
@@ -22,84 +20,67 @@ const rooms = [
 
 const styles = ["Modern", "Traditional", "Industrial", "Vintage", "Minimalist"];
 
-function RoomLightingStudio() {
-  const [temperature, setTemperature] = useState(2700);
-  const [brightness, setBrightness] = useState(65);
-  const [fixture, setFixture] = useState("Pendant");
-  const [sceneEnabled, setSceneEnabled] = useState(false);
+const lightingNeeds = [
+  { id: "main", label: "Main light", detail: "A central light to brighten the whole room." },
+  { id: "task", label: "Task lighting", detail: "Focused light for reading, cooking or working." },
+  { id: "accent", label: "Ambient & accent", detail: "Softer light to add warmth and character." },
+];
 
+function RoomFinder() {
+  const [room, setRoom] = useState("Living room");
+  const [purpose, setPurpose] = useState("main");
+  const shopUrl = `/shop?room=${encodeURIComponent(room)}&purpose=${encodeURIComponent(purpose)}`;
   return (
-    <section className="room-studio">
-      <div className="room-studio-copy">
-        <p className="eyebrow">A little 3D inspiration</p>
-        <h2 className="mt-2 font-serif text-4xl">Find your room’s glow.</h2>
-        <p className="mt-3 max-w-md text-sm leading-7 text-[var(--muted)]">
-          Explore a softly lit room. Drag to look around, then adjust the fixture,
-          colour temperature and brightness to set the mood.
+    <section className="room-finder">
+      <div>
+        <p className="eyebrow">A better place to start</p>
+        <h2 className="mt-2 font-serif text-4xl">Find the right light for your room.</h2>
+        <p className="mt-3 max-w-lg text-sm leading-7 text-[var(--muted)]">
+          Tell us where the light will go and what you need it to do. We’ll filter
+          the real catalogue for you—no pretend room previews.
         </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          {["Pendant", "Chandelier", "Wall light"].map((item) => (
+      </div>
+      <div className="room-finder-controls">
+        <fieldset>
+          <legend className="filter-title">Which room?</legend>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {rooms.map(({ name }) => (
             <button
               type="button"
-              key={item}
-              onClick={() => setFixture(item)}
-              aria-pressed={fixture === item}
+              key={name}
+              onClick={() => setRoom(name)}
+              aria-pressed={room === name}
               className={`rounded-full border px-4 py-2 text-xs transition ${
-                fixture === item
+                room === name
                   ? "border-[#c99f00] bg-[#f2c30022]"
                   : "border-[var(--line)] hover:border-[var(--ink)]"
               }`}
             >
-              {item}
+              {name}
             </button>
           ))}
-        </div>
-        <label className="mt-6 block text-xs">
-          Colour temperature · {temperature}K
-          <input
-            className="mt-2 block w-full accent-[#d7a900]"
-            type="range"
-            min="2700"
-            max="6500"
-            step="100"
-            value={temperature}
-            onChange={(event) => setTemperature(Number(event.target.value))}
-          />
-        </label>
-        <label className="mt-5 block text-xs">
-          Brightness · {brightness}%
-          <input
-            className="mt-2 block w-full accent-[#d7a900]"
-            type="range"
-            min="10"
-            max="100"
-            value={brightness}
-            onChange={(event) => setBrightness(Number(event.target.value))}
-          />
-        </label>
-        <Link
-          to={`/shop?room=${encodeURIComponent("Living room")}`}
-          className="mt-6 inline-flex items-center gap-2 text-xs uppercase tracking-widest"
-        >
-          Shop lights for your room <ArrowRight size={15} />
-        </Link>
-      </div>
-      <div className="room-studio-canvas">
-        {sceneEnabled ? (
-          <Suspense fallback={<div className="room-scene-loading" role="status">Preparing the room…</div>}>
-            <RoomScene temperature={temperature} brightness={brightness} fixture={fixture} />
-          </Suspense>
-        ) : (
-          <div className="room-scene-poster">
-            <div className="room-scene-poster-window" />
-            <div className="room-scene-poster-lamp" />
-            <div className="room-scene-poster-sofa" />
-            <button type="button" className="button-dark" onClick={() => setSceneEnabled(true)}>
-              Open interactive 3D room
-            </button>
           </div>
-        )}
-        <span className="room-studio-hint">Drag to explore</span>
+        </fieldset>
+        <fieldset className="mt-6">
+          <legend className="filter-title">What kind of light?</legend>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {lightingNeeds.map((need) => (
+              <button
+                type="button"
+                key={need.id}
+                onClick={() => setPurpose(need.id)}
+                aria-pressed={purpose === need.id}
+                className={`room-finder-need ${purpose === need.id ? "is-selected" : ""}`}
+              >
+                <span>{need.label}</span>
+                <small>{need.detail}</small>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <Link to={shopUrl} className="button-dark mt-6">
+          Show lights for my room <ArrowRight size={16} />
+        </Link>
       </div>
     </section>
   );
@@ -127,7 +108,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/shop" className="button-dark">Shop lighting <ArrowRight size={16} /></Link>
-            <a href="#room-studio" className="button-light">Explore the showroom</a>
+            <a href="#room-finder" className="button-light">Find lights for a room</a>
           </div>
           <div className="mt-12 flex items-center gap-3 text-xs text-[#77746d]">
             <span className="flex text-[#b58b14]" aria-hidden="true">
@@ -207,8 +188,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div id="room-studio">
-        <RoomLightingStudio />
+      <div id="room-finder">
+        <RoomFinder />
       </div>
 
       {recentlyViewed.length > 0 && (
