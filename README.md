@@ -76,6 +76,8 @@ format with digits only (for example, `2547XXXXXXXX`) and/or `VITE_INSTAGRAM_URL
 using the public Instagram username or profile URL. These are public contact
 details, not secrets. The workflow embeds them in the static site build. The
 storefront function allows the GitHub Pages origin for cross-origin catalog requests.
+After changing either Actions variable, rerun **Deploy to GitHub Pages** from the
+Actions tab (or push another commit) so the new contact details are included.
 
 The production workflow uses the minimum GitHub Actions permissions needed to
 build and publish the static site. Enable GitHub Pages with **Build and
