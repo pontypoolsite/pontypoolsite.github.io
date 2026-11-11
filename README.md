@@ -92,9 +92,9 @@ related items, and shareable product and wishlist links. Verified per-variant
 specifications (`dimensions`, `wattage`, `bulbBase`, `voltage`, and `material`)
 appear on product pages; only add details verified from the product information.
 Customers review their bag and message the business to request an order. The
-message contains product names and IDs, quantities, listed prices, customer
-contact details and delivery area. Delivery coverage and fees are confirmed in
-the conversation; WhatsApp/Instagram still requires the customer to tap Send.
+message contains product names and IDs, quantities, listed prices, and customer
+contact details. Delivery coverage and fees are confirmed in the conversation;
+WhatsApp/Instagram still requires the customer to tap Send.
 
 ## Deploy to Truehost cPanel
 

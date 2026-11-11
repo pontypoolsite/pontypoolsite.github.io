@@ -68,8 +68,6 @@ function ProductExtras() {
   const location = useLocation();
   const slug = location.pathname.split("/").pop();
   const { recent, remember } = useStore();
-  const [deliveryArea, setDeliveryArea] = useState("");
-  const [deliveryMessageReady, setDeliveryMessageReady] = useState(false);
   const product = products.find((item) => item.slug === slug);
   const productId = product?.id;
 
@@ -91,14 +89,9 @@ function ProductExtras() {
     .map((id) => products.find((item) => item.id === id))
     .filter((item): item is (typeof products)[number] => Boolean(item))
     .slice(0, 4);
-  const deliveryMessage = [
-    `Hello Pontypool, please confirm delivery coverage, fee and timing for ${deliveryArea.trim() || "my area"}.`,
-    `Product: ${product.name} (Item #${product.catalogId})`,
-  ].join("\n");
-
   return (
     <section className="narrow-page pt-6">
-      <div className="grid gap-8 border-y border-[var(--line)] py-8 md:grid-cols-2">
+      <div className="border-y border-[var(--line)] py-8">
         <div>
           <p className="eyebrow">Product information</p>
           <h2 className="mt-2 font-serif text-3xl">The details that matter.</h2>
@@ -116,41 +109,8 @@ function ProductExtras() {
               Verified measurements and bulb details are not listed yet. Ask us to confirm before ordering.
             </p>
           )}
-        </div>
-
-        <div>
-          <p className="eyebrow">Check your delivery</p>
-          <h2 className="mt-2 font-serif text-3xl">Is delivery available?</h2>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-            Enter your town or area and we’ll confirm coverage, delivery fee and timing in chat.
-          </p>
-          <label className="mt-4 block text-xs">
-            Town, county or neighbourhood
-            <input
-              className="form-input mt-2"
-              value={deliveryArea}
-              onChange={(event) => {
-                setDeliveryArea(event.target.value);
-                setDeliveryMessageReady(false);
-              }}
-              placeholder="For example, your town or neighbourhood"
-            />
-          </label>
-          <button
-            type="button"
-            className="button-light mt-3"
-            disabled={!deliveryArea.trim()}
-            onClick={() => setDeliveryMessageReady(true)}
-          >
-            Prepare a delivery question
-          </button>
-          {deliveryMessageReady && (
-            <div className="mt-4">
-              <ContactActions message={deliveryMessage} whatsappLabel="Ask about delivery" />
-            </div>
-          )}
           {!product.price && (
-            <div className="mt-5 border-t border-[var(--line)] pt-4">
+            <div className="mt-5">
               <p className="mb-3 text-sm text-[var(--muted)]">This item is price on request.</p>
               <ContactActions
                 message={`Hello Pontypool, please share a quote for ${product.name} (Item #${product.catalogId}).`}

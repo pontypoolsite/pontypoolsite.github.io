@@ -73,7 +73,6 @@ export function CheckoutFlow() {
   const { products } = useCatalog();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [deliveryArea, setDeliveryArea] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
 
@@ -103,7 +102,6 @@ export function CheckoutFlow() {
       : `Items subtotal: ${formatPrice(subtotal)} (delivery not included)`,
     `Name: ${name.trim()}`,
     `Customer phone: ${phone.trim()}`,
-    `Delivery area: ${deliveryArea.trim() || "Please ask me"}`,
     `Note: ${note.trim() || "None"}`,
     "",
     "Please confirm availability, delivery coverage and delivery fee before I place the order.",
@@ -182,10 +180,6 @@ export function CheckoutFlow() {
             <label className="block text-xs">
               Phone number
               <input className="form-input mt-2" type="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Include country code" />
-            </label>
-            <label className="block text-xs">
-              Delivery area <span className="text-[var(--muted)]">(optional)</span>
-              <input className="form-input mt-2" autoComplete="address-level2" value={deliveryArea} onChange={(event) => setDeliveryArea(event.target.value)} placeholder="Town, county or neighbourhood" />
             </label>
             <label className="block text-xs">
               Note for the team <span className="text-[var(--muted)]">(optional)</span>
