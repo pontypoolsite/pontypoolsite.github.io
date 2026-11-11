@@ -96,7 +96,11 @@ function validateVariants(value: unknown): boolean {
     if (!isRecord(variant)) return false;
     return (variant.price === undefined || validNonNegativeNumber(variant.price))
       && (variant.quantity === undefined || validNonNegativeInteger(variant.quantity))
-      && (variant.reorderLevel === undefined || validNonNegativeInteger(variant.reorderLevel));
+      && (variant.reorderLevel === undefined || validNonNegativeInteger(variant.reorderLevel))
+      && ["dimensions", "wattage", "bulbBase", "voltage", "material"].every((key) => (
+        variant[key] === undefined
+        || (typeof variant[key] === "string" && variant[key].length <= 200)
+      ));
   });
 }
 

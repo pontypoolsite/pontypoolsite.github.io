@@ -36,6 +36,11 @@ type CatalogVariant = {
   price?: unknown;
   quantity?: unknown;
   reorderLevel?: unknown;
+  dimensions?: unknown;
+  wattage?: unknown;
+  bulbBase?: unknown;
+  voltage?: unknown;
+  material?: unknown;
 };
 
 function isVariant(value: unknown): value is CatalogVariant {
@@ -89,7 +94,13 @@ export function mapCatalogProducts(records: CatalogProduct[]): Product[] {
         price: numberValue(variant?.price, numberValue(record.price)),
         finishes: suffix ? [suffix] : [],
         description: record.description?.trim() || "",
-        specs: { dimensions: "", wattage: "", bulbBase: "", voltage: "", material: "" },
+        specs: {
+          dimensions: textValue(variant?.dimensions),
+          wattage: textValue(variant?.wattage),
+          bulbBase: textValue(variant?.bulbBase),
+          voltage: textValue(variant?.voltage),
+          material: textValue(variant?.material),
+        },
         images: imageList,
         isNew: false,
         isBestSeller: false,

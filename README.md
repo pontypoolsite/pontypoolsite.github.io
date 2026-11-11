@@ -98,6 +98,16 @@ build and publish the static site. Enable GitHub Pages with **Build and
 deployment → Source: GitHub Actions**. Keep the repository public to make the
 preview searchable without signing in.
 
+## Storefront discovery features
+
+The storefront includes room and style entry points, mobile filter sheets, grid
+and list product views, recently viewed items, and shareable product and
+wishlist links. Product specifications can be entered per variant in the admin
+Variants JSON using `dimensions`, `wattage`, `bulbBase`, `voltage`, and
+`material`; only add details verified from the product information. The home
+page's interactive 3D room is loaded only when a visitor opens it, to keep
+initial page loading lighter.
+
 ## Deploy to Truehost cPanel
 
 This is a static Vite app. Run `pnpm install` and `pnpm run build`, then upload

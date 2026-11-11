@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useCatalog } from "@/context/CatalogContext";
 
@@ -40,6 +40,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [recent, setRecent] = useState<string[]>(() => read("pontypool-recent", []));
   const [dark, setDark] = useState(() => read("pontypool-dark", false));
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const remember = useCallback((id: string) => {
+    setRecent((current) => [id, ...current.filter((item) => item !== id)].slice(0, 8));
+  }, []);
 
   useEffect(() => { localStorage.setItem("pontypool-cart", JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem("pontypool-wishlist", JSON.stringify(wishlist)); }, [wishlist]);
@@ -110,10 +113,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       return [...current, id];
     }),
-    remember: (id) => setRecent((current) => [id, ...current.filter((item) => item !== id)].slice(0, 8)),
+    remember,
     setDrawerOpen,
     toggleDark: () => setDark((current) => !current),
-  }), [cart, wishlist, compare, recent, drawerOpen, dark, products]);
+  }), [cart, wishlist, compare, recent, drawerOpen, dark, products, remember]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

@@ -1,0 +1,368 @@
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 36px;
+}
+
+.product-card-copy {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.product-save-button {
+  z-index: 3;
+  color: #29251e;
+  box-shadow: 0 3px 14px #00000018;
+}
+
+.product-share-link {
+  flex: 0 0 auto;
+}
+
+.product-grid-list {
+  display: grid;
+  gap: 18px;
+}
+
+.product-card-list {
+  display: grid;
+  grid-template-columns: minmax(150px, 250px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.product-card-list .product-visual {
+  aspect-ratio: 1.1;
+}
+
+.product-card-list .product-card-copy {
+  align-items: center;
+}
+
+.product-card-list .product-card-copy h3 {
+  font-family: "Playfair Display", serif;
+  font-size: 20px;
+}
+
+.room-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.room-collection-tile {
+  position: relative;
+  display: block;
+  min-height: 190px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #e7e1d6;
+}
+
+.room-collection-tile::after {
+  position: absolute;
+  inset: 30% 0 0;
+  background: linear-gradient(transparent, #14110dcc);
+  content: "";
+}
+
+.room-collection-tile img {
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+
+.room-collection-tile:hover img {
+  transform: scale(1.04);
+}
+
+.room-collection-tile span {
+  position: absolute;
+  z-index: 1;
+  right: 16px;
+  bottom: 15px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  font-family: "Playfair Display", serif;
+  font-size: 22px;
+}
+
+.style-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 11px;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.style-chip:hover {
+  border-color: #c39b00;
+  background: var(--wash);
+}
+
+.room-studio {
+  display: grid;
+  max-width: 1220px;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);
+  align-items: center;
+  gap: 44px;
+  margin: 32px auto;
+  padding: 54px 40px;
+  border-radius: 18px;
+  background: var(--wash);
+}
+
+.room-studio-copy {
+  min-width: 0;
+}
+
+.room-studio-canvas {
+  position: relative;
+  height: 390px;
+  overflow: hidden;
+  border: 1px solid #fff9;
+  border-radius: 16px;
+  background: #ded7ca;
+  box-shadow: 0 20px 60px #4436241a;
+}
+
+.room-studio-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+.room-studio-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  pointer-events: none;
+  border-radius: 999px;
+  background: #1b1813b8;
+  padding: 7px 11px;
+  color: white;
+  font-size: 10px;
+}
+
+.room-scene-loading {
+  display: grid;
+  min-height: 390px;
+  place-items: center;
+  background: linear-gradient(145deg, #eee6d8, #c6b9a2);
+  color: #6b5b43;
+  font-size: 12px;
+}
+
+.room-scene-poster {
+  position: relative;
+  display: grid;
+  height: 390px;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, transparent 49.5%, #76634d 49.5% 50.5%, transparent 50.5%),
+    linear-gradient(180deg, #e6ddd0 0 68%, #8e7c66 68%);
+}
+
+.room-scene-poster-window {
+  position: absolute;
+  top: 11%;
+  right: 12%;
+  width: 25%;
+  height: 45%;
+  border: 8px solid #fff9;
+  background: linear-gradient(140deg, #c8d6d4, #f8e6c6);
+  box-shadow: 0 8px 26px #54452c25;
+}
+
+.room-scene-poster-lamp {
+  position: absolute;
+  top: 7%;
+  left: 49%;
+  width: 3px;
+  height: 37%;
+  background: #71634e;
+}
+
+.room-scene-poster-lamp::after {
+  position: absolute;
+  top: 84%;
+  left: -30px;
+  width: 62px;
+  height: 28px;
+  border-radius: 50% 50% 15% 15%;
+  background: linear-gradient(#fff6d4, #ad8853);
+  box-shadow: 0 0 34px 14px #ffc65b88;
+  content: "";
+}
+
+.room-scene-poster-sofa {
+  position: absolute;
+  bottom: 13%;
+  left: 15%;
+  width: 42%;
+  height: 21%;
+  border-radius: 22px 22px 5px 5px;
+  background: #9b8972;
+  box-shadow: inset 0 8px #b09e87;
+}
+
+.room-scene-poster .button-dark {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 10px 28px #20180f44;
+}
+
+.mobile-filter-trigger {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 9px 13px;
+  font-size: 11px;
+}
+
+.mobile-filter-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background: #0008;
+}
+
+.mobile-filter-sheet {
+  display: flex;
+  width: 100%;
+  max-height: min(90vh, 760px);
+  flex-direction: column;
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 -12px 40px #0002;
+}
+
+.mobile-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mobile-filter-content {
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.mobile-filter-content .filter-link {
+  padding-block: 10px;
+}
+
+.mobile-filter-apply {
+  margin: 12px 22px calc(18px + env(safe-area-inset-bottom));
+}
+
+.empty-catalog-state {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 36px 22px;
+  background: var(--wash);
+  text-align: center;
+}
+
+.dark .room-studio {
+  background: #23221e;
+}
+
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+
+  .product-card-list .quick-button {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 1100px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .room-collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .room-collection-tile {
+    min-height: 145px;
+  }
+
+  .room-collection-tile span {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    font-size: 18px;
+  }
+
+  .room-studio {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    margin: 20px 14px;
+    padding: 30px 20px;
+  }
+
+  .room-studio-canvas,
+  .room-scene-loading,
+  .room-scene-poster {
+    height: 300px;
+  }
+
+  .catalog-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-page .filter-panel {
+    display: none;
+  }
+
+  .mobile-filter-trigger {
+    display: inline-flex;
+  }
+
+  .product-card-list {
+    grid-template-columns: minmax(110px, 36%) minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .product-card-list .product-card-copy {
+    align-items: flex-start;
+  }
+
+  .product-card-list .product-card-copy h3 {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-collection-tile img {
+    transition: none;
+  }
+}
